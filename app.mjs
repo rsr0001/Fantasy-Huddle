@@ -97,7 +97,7 @@ function playerCard(player) {
 }
 
 function playerSection(title, players, empty, detail = '') {
-  return `<section class="report-section"><div class="section-title"><h2>${title}</h2>${detail ? `<p>${detail}</p>` : ''}</div>
+  return `<section class="report-section"${title.startsWith('Starters') ? ' id="players"' : ''}><div class="section-title"><h2>${title}</h2>${detail ? `<p>${detail}</p>` : ''}</div>
     ${players.length ? `<div class="players">${players.map(playerCard).join('')}</div>` : `<p class="empty">${empty}</p>`}</section>`
 }
 
@@ -134,7 +134,7 @@ function render(data) {
     ${bestBall ? '' : playerSection('Benchwarmers of the week', leaders(players.filter(player => !player.starter)), 'No bench scores with known positions for this week.', 'Top bench scorer at each position')}
     <section class="report-section"><div class="section-title"><h2>Player leaderboard</h2></div>
     ${players.length ? `<details class="details"><summary>View all ${players.length} scored players</summary><div class="table-wrap"><table><thead><tr><th scope="col">Player</th><th scope="col">Team</th><th scope="col">Lineup</th><th scope="col">Points</th></tr></thead><tbody>${players.map(player => `<tr><td>${escape(player.name)} <small>${escape(player.position)}</small></td><td>${escape(player.team)}</td><td>${bestBall ? 'Rostered' : player.starter ? 'Starter' : 'Bench'}</td><td>${format(player.points)}</td></tr>`).join('')}</tbody></table></div></details>` : '<p class="empty">Sleeper did not return player points for this week.</p>'}</section>
-    ${awards.length ? `<section class="report-section"><div class="section-title"><h2>League awards</h2></div><div class="award-grid">${awards.join('')}</div></section>` : ''}
+    ${awards.length ? `<section class="report-section" id="awards"><div class="section-title"><h2>League awards</h2></div><div class="award-grid">${awards.join('')}</div></section>` : ''}
     <section class="report-section" id="performance"><div class="section-title"><h2>Team performance</h2><p>Weekly standings</p></div>
     <div class="performance">${teams.map(team => `<article class="performance-row"><span class="rank">${teams.findIndex(other => other.points === team.points) + 1}</span>${avatar(team)}<div class="performance-body"><div><h3>${escape(team.name)}</h3><strong>${format(team.points)} pts</strong></div>${team.efficiency == null ? '' : `<progress value="${team.efficiency}" max="1" aria-label="${escape(team.name)} lineup efficiency"></progress>`}<p>${team.max == null ? 'Optimal lineup unavailable' : `${format(team.max)} optimal pts`}${team.efficiency == null ? '' : ` · ${percent(team.efficiency)} efficiency`}</p></div></article>`).join('')}</div>
     <p class="data-note">Optimal points are estimated from scored players in the weekly matchup roster and eligible lineup slots. Efficiency uses the starter total before commissioner adjustments.</p></section>
