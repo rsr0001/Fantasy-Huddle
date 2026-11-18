@@ -1,5 +1,6 @@
 import { buildReport, parseLeagueId } from './scoring.mjs'
 import { demoData } from './demo.mjs'
+import { initAccount } from './account.mjs'
 
 const $ = id => document.getElementById(id)
 const api = 'https://api.sleeper.app/v1'
@@ -213,7 +214,7 @@ $('open-league').addEventListener('click', () => {
   $('league-dialog').showModal()
   $('league-id').focus()
 })
-document.querySelector('.close').addEventListener('click', () => $('league-dialog').close())
+document.querySelector('#league-dialog .close').addEventListener('click', () => $('league-dialog').close())
 $('league-form').addEventListener('submit', async event => {
   event.preventDefault()
   const id = parseLeagueId($('league-id').value)
@@ -228,8 +229,9 @@ $('league-form').addEventListener('submit', async event => {
     const league = await request(`league/${id}`)
     if (league?.sport !== 'nfl' || typeof league.name !== 'string') throw new Error('No NFL league was found for that ID.')
     if (!$('league-dialog').open) return
+    if (account.signedIn()) await account.add(id, league.name)
     leagues = [...leagues.filter(saved => saved.league_id !== id), { league_id: id, name: league.name }]
-    saveLeagues()
+    if (!account.signedIn()) saveLeagues()
     active = id
     week = null
     updateControls()
@@ -252,9 +254,10 @@ $('week').addEventListener('change', event => {
   load()
 })
 $('refresh').addEventListener('click', () => load({ refresh: true }))
-$('remove').addEventListener('click', () => {
+$('remove').addEventListener('click', async () => {
+  try { if (account.signedIn()) await account.remove(active) } catch (error) { $('status').textContent = error.message; return }
   leagues = leagues.filter(league => league.league_id !== active)
-  saveLeagues()
+  if (!account.signedIn()) saveLeagues()
   active = 'demo'
   week = null
   updateControls()
@@ -271,5 +274,11 @@ $('install').addEventListener('click', async () => {
   $('install').hidden = true
 })
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(() => {})
+const account = initAccount({ onChange: saved => {
+  if (saved) leagues = saved
+  else { try { const guest = JSON.parse(localStorage.getItem(savedKey)); leagues = Array.isArray(guest) ? guest.filter(league => typeof league?.name === 'string' && /^\d{8,24}$/.test(league.league_id)) : [] } catch { leagues = [] } }
+  active = 'demo'; week = null; updateControls(); load()
+} })
 updateControls()
 load()
+account.restore()
