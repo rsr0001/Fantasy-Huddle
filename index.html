@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#142620">
+<meta name="description" content="Weekly fantasy football reports based on your Sleeper league’s scoring.">
+<title>Fantasy Huddle</title>
+<link rel="stylesheet" href="./style.css">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icons/icon-192.png">
+<link rel="apple-touch-icon" href="./icons/icon-192.png">
+<script type="module" src="./app.mjs"></script>
+</head>
+<body>
+<header class="top"><div class="top-inner">
+<a class="brand" href="./"><img src="./icons/icon-192.png" alt=""> Fantasy Huddle</a>
+<div class="top-actions"><button id="install" class="subtle" type="button" hidden>Install</button><button id="open-league" class="primary" type="button">＋ Add league</button></div>
+</div></header>
+<main>
+<div class="toolbar">
+<div class="league-control"><label for="league">League</label><select id="league"><option value="demo">Demo league</option></select><button id="remove" class="subtle" type="button" hidden>Remove</button></div>
+<div class="week-control"><label for="week">Week</label><select id="week"></select><button id="refresh" type="button" class="subtle">↻ Refresh</button></div>
+</div>
+<div id="status" role="status"></div>
+<section class="hero" aria-labelledby="title">
+<div class="field" aria-hidden="true"><span></span></div>
+<div class="hero-content"><p id="season" class="eyebrow"></p><h1 id="title">Weekly Report</h1><p id="hero-description"></p></div>
+<a class="hero-link" href="#performance">Team standings ↓</a>
+</section>
+<div id="report"></div>
+<footer><strong>Fantasy Huddle</strong><a href="https://docs.sleeper.com/">Sleeper API</a></footer>
+</main>
+<dialog id="league-dialog">
+<form id="league-form">
+<button class="close subtle" type="button" aria-label="Close">×</button>
+<h2>Add a Sleeper league</h2>
+<p>Enter the league ID from Sleeper’s league settings or paste a Sleeper league link.</p>
+<label for="league-id">League ID or link</label>
+<input id="league-id" required autocomplete="off" spellcheck="false" placeholder="e.g. 1234567890123456789">
+<p id="league-error" role="alert"></p>
+<button class="primary" type="submit">Add league</button>
+</form>
+</dialog>
+</body>
+</html>
