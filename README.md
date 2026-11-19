@@ -1,6 +1,6 @@
 # Fantasy Huddle
 
-Add a Sleeper NFL league by ID or league link, then pick a week. Guest league IDs are saved for the current browser tab session and are cleared when the tab closes. Google sign-in saves a separate league list to your account across devices; signing out restores the guest list. A report URL includes the league and week for sharing.
+Add a Sleeper NFL league by ID or league link, then pick a completed week. During the current season, the most recent available week is the week before Sleeper?s current NFL week; it becomes available after Sleeper advances the week. Guest league IDs are saved for the current browser tab session and are cleared when the tab closes. Google sign-in saves a separate league list to your account across devices; signing out restores the guest list. A report URL includes the league and week for sharing.
 
 ## Scoring
 
@@ -14,7 +14,7 @@ Put these files at the root of a GitHub repository. In **Settings → Pages**, s
 
 For local use, run `python3 -m http.server 8000` in this folder and open `http://localhost:8000`.
 
-On iOS, use Safari’s **Share → Add to Home Screen**. On supported Chromium browsers, use **Install**. The cached app and demo can open offline after the first visit. Live reports require an internet connection. When releasing updates, bump the shell cache version in `sw.js`.
+On iOS, use Safari’s **Share → Add to Home Screen**. On supported Chromium browsers, use **Install**. The cached app shell can open offline after the first visit. Live reports require an internet connection. When releasing updates, bump the shell cache version in `sw.js`.
 
 ## Account service
 

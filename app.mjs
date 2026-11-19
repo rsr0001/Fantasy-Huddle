@@ -1,5 +1,5 @@
 import { buildReport, parseLeagueId } from './scoring.mjs'
-import { demoData } from './demo.mjs'
+import { completedWeek } from './weeks.mjs'
 import { initAccount } from './account.mjs'
 
 const $ = id => document.getElementById(id)
@@ -17,7 +17,7 @@ try {
   if (Array.isArray(stored)) leagues = stored.filter(league => typeof league?.name === 'string' && /^\d{8,24}$/.test(league.league_id))
 } catch {}
 const params = new URLSearchParams(location.search)
-let active = parseLeagueId(params.get('league') ?? '') || 'demo'
+let active = parseLeagueId(params.get('league') ?? '') || leagues[0]?.league_id || ''
 let week = Number(params.get('week')) || null
 if (!Number.isInteger(week) || week < 1 || week > 18) week = null
 let pending
@@ -56,16 +56,18 @@ function saveLeagues() {
 }
 
 function updateControls() {
-  $('league').replaceChildren(new Option('Demo league', 'demo'), ...leagues.map(league => new Option(league.name, league.league_id)))
-  if (active !== 'demo' && !leagues.some(league => league.league_id === active)) $('league').add(new Option('Shared league', active))
+  $('league').replaceChildren(new Option('Select a league', ''), ...leagues.map(league => new Option(league.name, league.league_id)))
+  if (active && !leagues.some(league => league.league_id === active)) $('league').add(new Option('Shared league', active))
   $('league').value = active
   $('remove').hidden = !leagues.some(league => league.league_id === active)
 }
 
 function updateUrl() {
   const url = new URL(location.href)
-  url.searchParams.set('league', active)
+  if (active) url.searchParams.set('league', active)
+  else url.searchParams.delete('league')
   if (week) url.searchParams.set('week', String(week))
+  else url.searchParams.delete('week')
   history.replaceState(null, '', url)
 }
 
@@ -110,9 +112,8 @@ function render(data) {
   const { league } = data
   const report = buildReport(data)
   const { teams, players, managers, biggest, closest, toughLoss, lowestWin, bestBall } = report
-  const isDemo = league.league_id === 'demo'
   $('season').textContent = `${league.season} NFL SEASON / WEEK ${week}`
-  $('hero-description').textContent = isDemo ? 'Sample scores from a fictional Sleeper league.' : `${league.name} · League-scored fantasy points`
+  $('hero-description').textContent = `${league.name} · League-scored fantasy points`
   document.querySelector('.hero-link').hidden = !teams.length
   if (!teams.length) {
     $('report').innerHTML = '<p class="empty">Sleeper has no matchup scores for this week yet. Choose another week or refresh later.</p>'
@@ -153,16 +154,18 @@ async function load({ refresh = false } = {}) {
   pending = controller
   const { signal } = controller
   const id = active
-  $('status').textContent = id === 'demo' ? '' : 'Loading Sleeper scores…'
+  $('status').textContent = id ? 'Loading Sleeper scores...' : ''
   $('report').replaceChildren()
   document.querySelector('.hero-link').hidden = true
   $('refresh').disabled = true
   $('week').disabled = true
   try {
-    if (id === 'demo') {
-      week ??= 10
-      setWeekOptions(18)
-      render(demoData(week))
+    if (!id) {
+      week = null
+      $('week').replaceChildren(new Option('No completed weeks', ''))
+      $('season').textContent = ''
+      $('hero-description').textContent = 'Add a Sleeper league to see its completed weekly reports.'
+      $('report').innerHTML = '<p class="empty">No league selected. Choose Add league to get started.</p>'
       updateUrl()
       return
     }
@@ -171,21 +174,31 @@ async function load({ refresh = false } = {}) {
     if (refresh) metadata.delete(id)
     let info = metadata.get(id)
     if (!info) {
-      const [league, users, rosters, state] = await Promise.all([
+      const [league, users, rosters] = await Promise.all([
         request(`league/${id}`, signal),
         request(`league/${id}/users`, signal),
-        request(`league/${id}/rosters`, signal),
-        request('state/nfl', signal).catch(() => null)
+        request(`league/${id}/rosters`, signal)
       ])
       if (league?.sport !== 'nfl' || !Array.isArray(users) || !Array.isArray(rosters)) throw new Error('Sleeper did not return an NFL league for this ID.')
       if (signal.aborted) return
-      info = { league, users, rosters, state }
+      info = { league, users, rosters }
       metadata.set(id, info)
     }
-    week ??= info.league.season === String(info.state?.season) && info.state?.season_type === 'regular'
-      ? Math.min(18, Math.max(1, Number(info.state.week) || 1))
-      : Math.min(18, Math.max(1, Number(info.league.settings?.last_scored_leg) || 1))
-    setWeekOptions(18)
+    const state = await request('state/nfl', signal)
+    if (signal.aborted) return
+    const maximum = completedWeek(info.league, state)
+    if (maximum === null) throw new Error('Unable to determine completed NFL weeks. Please try Refresh.')
+    if (maximum === 0) {
+      week = null
+      $('week').replaceChildren(new Option('No completed weeks', ''))
+      $('season').textContent = `${info.league.season} NFL SEASON`
+      $('hero-description').textContent = 'No completed NFL weeks are available yet.'
+      $('status').textContent = ''
+      updateUrl()
+      return
+    }
+    if (!week || week > maximum) week = maximum
+    setWeekOptions(maximum)
     updateUrl()
     directoryRequest ??= getDirectory().then(directory => {
       if (!Object.keys(directory).length) directoryRequest = null
@@ -202,8 +215,8 @@ async function load({ refresh = false } = {}) {
     $('hero-description').textContent = 'Choose a league and week to view its report.'
   } finally {
     if (!signal.aborted) {
-      $('refresh').disabled = false
-      $('week').disabled = false
+      $('refresh').disabled = !active
+      $('week').disabled = !active || !week
     }
   }
 }
@@ -246,6 +259,7 @@ $('league-form').addEventListener('submit', async event => {
 $('league').addEventListener('change', event => {
   active = event.target.value
   week = null
+  $('week').replaceChildren()
   updateControls()
   load()
 })
@@ -258,7 +272,7 @@ $('remove').addEventListener('click', async () => {
   try { if (account.signedIn()) await account.remove(active) } catch (error) { $('status').textContent = error.message; return }
   leagues = leagues.filter(league => league.league_id !== active)
   if (!account.signedIn()) saveLeagues()
-  active = 'demo'
+  active = leagues[0]?.league_id || ''
   week = null
   updateControls()
   load()
@@ -277,7 +291,7 @@ if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').ca
 const account = initAccount({ onChange: saved => {
   if (saved) leagues = saved
   else { try { const guest = JSON.parse(sessionStorage.getItem(savedKey)); leagues = Array.isArray(guest) ? guest.filter(league => typeof league?.name === 'string' && /^\d{8,24}$/.test(league.league_id)) : [] } catch { leagues = [] } }
-  active = 'demo'; week = null; updateControls(); load()
+  active = leagues[0]?.league_id || ''; week = null; updateControls(); load()
 } })
 updateControls()
 load()
