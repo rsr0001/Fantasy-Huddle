@@ -19,7 +19,7 @@ export function initAccount({onChange}) {
   function draw() {
     $('account-button').textContent = user ? user.name : 'Sign in'
     $('account-title').textContent = user ? `Signed in as ${user.name}` : 'Your leagues, anywhere'
-    $('account-description').textContent = user ? 'Leagues added here are saved to your account. Guest leagues stay on this device.' : 'Continue as a guest to keep leagues on this device, or sign in with Google to save leagues across devices.'
+    $('account-description').textContent = user ? 'Leagues added here are saved to your account. Guest leagues last until this tab closes.' : 'Guest leagues last until this tab closes. Sign in with Google to save leagues across devices until you remove them.'
     $('signin').hidden = !!user
     $('signout').hidden = !user
     $('google-signin').replaceChildren()
@@ -39,7 +39,7 @@ export function initAccount({onChange}) {
           token=result.token
           const saved=await api('/leagues')
           sessionStorage.setItem(key,token); user=result.user; draw(); onChange(saved.leagues)
-          $('account-status').textContent='Signed in. Your guest leagues remain on this device.'
+          $('account-status').textContent='Signed in. Your guest leagues remain in this tab until it closes.'
         } catch(error) { token=''; sessionStorage.removeItem(key); $('account-status').textContent=error.message }
       }})
       google.accounts.id.renderButton($('google-signin'),{theme:'outline',size:'large',text:'signin_with',shape:'rectangular'})
@@ -48,7 +48,7 @@ export function initAccount({onChange}) {
   })
   $('signout').addEventListener('click', async () => {
     try { await api('/auth/logout',{method:'POST',body:'{}'}) } catch(error) { $('account-status').textContent=error.message; return }
-    token=''; user=null; sessionStorage.removeItem(key); window.google?.accounts.id.disableAutoSelect(); draw(); onChange(null); $('account-status').textContent='Signed out. Guest leagues are available on this device.'
+    token=''; user=null; sessionStorage.removeItem(key); window.google?.accounts.id.disableAutoSelect(); draw(); onChange(null); $('account-status').textContent='Signed out. Guest leagues are available until this tab closes.'
   })
   return {
     signedIn: () => !!user,

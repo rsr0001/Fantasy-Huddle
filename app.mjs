@@ -13,7 +13,7 @@ const scoringLabels = { pass_td: 'Passing TD', pass_yd: 'Passing yard', pass_fd:
 const escape = value => String(value ?? '').replace(/[&<>"']/g, character => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' })[character])
 let leagues = []
 try {
-  const stored = JSON.parse(localStorage.getItem(savedKey))
+  const stored = JSON.parse(sessionStorage.getItem(savedKey))
   if (Array.isArray(stored)) leagues = stored.filter(league => typeof league?.name === 'string' && /^\d{8,24}$/.test(league.league_id))
 } catch {}
 const params = new URLSearchParams(location.search)
@@ -52,7 +52,7 @@ async function getDirectory() {
 }
 
 function saveLeagues() {
-  try { localStorage.setItem(savedKey, JSON.stringify(leagues)) } catch {}
+  try { sessionStorage.setItem(savedKey, JSON.stringify(leagues)) } catch {}
 }
 
 function updateControls() {
@@ -276,7 +276,7 @@ $('install').addEventListener('click', async () => {
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(() => {})
 const account = initAccount({ onChange: saved => {
   if (saved) leagues = saved
-  else { try { const guest = JSON.parse(localStorage.getItem(savedKey)); leagues = Array.isArray(guest) ? guest.filter(league => typeof league?.name === 'string' && /^\d{8,24}$/.test(league.league_id)) : [] } catch { leagues = [] } }
+  else { try { const guest = JSON.parse(sessionStorage.getItem(savedKey)); leagues = Array.isArray(guest) ? guest.filter(league => typeof league?.name === 'string' && /^\d{8,24}$/.test(league.league_id)) : [] } catch { leagues = [] } }
   active = 'demo'; week = null; updateControls(); load()
 } })
 updateControls()
