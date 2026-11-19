@@ -15,4 +15,3 @@ assert.equal(document.querySelector('#awards-view').hidden,false)
 document.querySelector('[data-view=standings]').click()
 assert.equal(document.querySelector('#standings-view').hidden,false)
 console.log('Independent tab views passed')
-
