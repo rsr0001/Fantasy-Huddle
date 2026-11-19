@@ -17,7 +17,7 @@
 <a class="brand" href="./"><span class="logo" aria-hidden="true">&#127944;</span> FANTASY<span>HUDDLE</span></a>
 <div class="top-actions"><button id="account-button" class="subtle" type="button">Sign in</button><button id="install" class="subtle" type="button" hidden>Install</button><button id="open-league" class="primary" type="button">＋ Add league</button></div>
 </div></header>
-<div class="app-layout"><aside class="app-sidebar"><div class="nav-caption">YOUR LEAGUE</div><nav class="app-nav" aria-label="Report navigation"><a href="#report-top"><span aria-hidden="true">&#9638;</span> Report</a><a href="#players"><span aria-hidden="true">&#9734;</span> Players</a><a href="#awards"><span aria-hidden="true">&#9671;</span> Awards</a><a href="#performance"><span aria-hidden="true">&#9636;</span> Standings</a></nav><div class="sidebar-note">&#127944;<p>Your league.<br>Your weekly story.</p></div></aside><main class="app-content" id="report-top">
+<div class="app-layout"><aside class="app-sidebar"><div class="nav-caption">YOUR LEAGUE</div><nav class="app-nav" aria-label="Report navigation"><a href="#report" data-view="report"><span aria-hidden="true">&#9638;</span> Report</a><a href="#stats" data-view="stats"><span aria-hidden="true">&#9734;</span> Stats</a><a href="#awards" data-view="awards"><span aria-hidden="true">&#9671;</span> Awards</a><a href="#standings" data-view="standings"><span aria-hidden="true">&#9636;</span> Standings</a></nav><div class="sidebar-note">&#127944;<p>Your league.<br>Your weekly story.</p></div></aside><main class="app-content" id="report-top">
 <div class="toolbar">
 <div class="league-control"><label for="league">League</label><select id="league"><option value="">Select a league</option></select><button id="remove" class="subtle" type="button" hidden>Remove</button></div>
 <div class="week-control"><label for="week">Week</label><select id="week"></select><button id="refresh" type="button" class="subtle">↻ Refresh</button></div>
@@ -28,7 +28,7 @@
 <div class="hero-content"><p id="season" class="eyebrow"></p><h1 id="title">Weekly Report</h1><p id="hero-description"></p></div>
 <a class="hero-link" href="#performance">Team standings ↓</a>
 </section>
-<div id="report"></div>
+<div id="report"></div><section id="stats-view" hidden><div class="stats-mode" role="group" aria-label="Stats category"><button id="stats-players" type="button" aria-pressed="true">Players</button><button id="stats-defense" type="button" aria-pressed="false">Defenses</button></div><div id="stats-root"></div><div id="defense-root" hidden></div></section><section id="awards-view" hidden></section><section id="standings-view" hidden></section>
 <footer><strong>Fantasy Huddle</strong><a href="https://docs.sleeper.com/">Sleeper API</a></footer>
 </main></div>
 <dialog id="account-dialog"><div class="account-panel"><button class="close subtle" id="account-close" type="button" aria-label="Close">&times;</button><h2 id="account-title">Your leagues, anywhere</h2><p id="account-description">Guest leagues last until this tab closes. Sign in with Google to save leagues across devices until you remove them.</p><div id="google-signin"></div><button class="primary" id="signin" type="button">Sign in with Google</button><button class="subtle" id="signout" type="button" hidden>Sign out</button><p id="account-status" role="status"></p></div></dialog>

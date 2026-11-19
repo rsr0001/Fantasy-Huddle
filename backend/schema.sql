@@ -21,3 +21,11 @@ CREATE TABLE IF NOT EXISTS leagues (
   created_at timestamptz NOT NULL DEFAULT now(),
   PRIMARY KEY(user_id,league_id)
 );
+
+CREATE TABLE IF NOT EXISTS nfl_weekly_stats (
+  season integer NOT NULL,
+  week integer NOT NULL,
+  payload jsonb NOT NULL,
+  updated_at timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (season, week)
+);

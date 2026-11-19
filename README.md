@@ -19,3 +19,9 @@ On iOS, use Safari’s **Share → Add to Home Screen**. On supported Chromium b
 ## Account service
 
 The isolated Node.js account API is in `backend/` and runs on the VPS as `fantasyhuddle.service`, bound to `127.0.0.1:5011` behind its own Nginx virtual host. It uses a separate `fantasyhuddle` PostgreSQL database and role. Configuration is kept in `/etc/fantasyhuddle/api.env`. Google sign-in uses a server-generated, single-use nonce and verified ID tokens; account sessions expire after 12 hours. Guest leagues remain in the current tab session and are not automatically imported into an account. Account leagues persist until removed.
+
+## Player stats
+
+The Stats view includes all NFL players in Sleeper's undocumented weekly stats feed, including free agents. Fantasy points are estimates calculated from the league's scoring settings. For each selected week the app checks available rostered-player scores against Sleeper's matchup scores; if the comparison fails or there are no comparable scores, points ranking is hidden. Passing this check is not proof that every rare scoring rule is covered for every free agent. Rostered and available filters reflect the current roster, not historical ownership. Snap percentage uses recorded offensive snaps where available. Sleeper can change or discontinue this feed without notice.
+
+Weekly NFL stats are cached in Fantasy Huddle's own PostgreSQL `nfl_weekly_stats` table. Snapshots are refreshed on demand after 12 hours; if an upstream refresh fails, the last snapshot is returned as stale with its timestamp. Defense results use the opponent in Sleeper's unofficial feed and are estimates. Route participation is not currently available. Season records are computed from completed matchups and sorted by wins then points, so they may differ from commissioner-defined official standings.

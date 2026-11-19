@@ -1,6 +1,7 @@
 import express from 'express';
 import { rateLimit } from 'express-rate-limit';
 import { randomBytes, randomUUID, createHash } from 'node:crypto';
+import { createStatsHandler } from './stats-data.js';
 
 
 export const hash = value => createHash('sha256').update(value).digest('hex');
@@ -31,6 +32,7 @@ export function createApp({ pool, clientId, origin, verifyGoogle }) {
     await pool.query('SELECT 1');
     res.json({ ok: true, service: 'fantasy-huddle-api' });
   });
+  app.get('/data/nfl/:season/:week', createStatsHandler({ pool }));
   app.get('/config', (req, res) => res.json({ googleClientId: clientId || null }));
   const authLimit = rateLimit({ windowMs: 60000, limit: 20, standardHeaders: 'draft-8', legacyHeaders: false });
   app.post('/auth/challenge', authLimit, async (req, res) => {

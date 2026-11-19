@@ -1,5 +1,5 @@
-const shell = 'fantasy-huddle-shell-v5'
-const assets = ['./', './index.html', './style.css', './app.mjs', './account.mjs', './scoring.mjs', './weeks.mjs', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png']
+const shell = 'fantasy-huddle-shell-v6'
+const assets = ['./', './index.html', './style.css', './app.mjs', './account.mjs', './scoring.mjs', './weeks.mjs', './stats.mjs', './defense.mjs', './summary.mjs', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png']
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(shell).then(cache => cache.addAll(assets.map(url => new Request(url, { cache: 'reload' })))))
 })

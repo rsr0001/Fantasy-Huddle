@@ -1,6 +1,9 @@
 import { buildReport, parseLeagueId } from './scoring.mjs'
 import { completedWeek } from './weeks.mjs'
 import { initAccount } from './account.mjs'
+import { initStats } from './stats.mjs'
+import { initDefense } from './defense.mjs'
+import { initSummary } from './summary.mjs'
 
 const $ = id => document.getElementById(id)
 const api = 'https://api.sleeper.app/v1'
@@ -24,6 +27,7 @@ let pending
 let directoryRequest
 let installPrompt
 const metadata = new Map()
+let availableWeek = 0
 
 async function request(path, signal) {
   const response = await fetch(`${api}/${path}`, { signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(15000)]) : AbortSignal.timeout(15000) })
@@ -142,6 +146,11 @@ function render(data) {
     <p class="data-note">Optimal points are estimated from scored players in the weekly matchup roster and eligible lineup slots. Efficiency uses the starter total before commissioner adjustments.</p></section>
     <section class="report-section"><div class="section-title"><h2>League scoring</h2></div><details class="details"><summary>View Sleeper scoring settings</summary>
     <dl>${scores.map(([key, value]) => `<div><dt>${escape(scoringLabels[key] ?? key)}</dt><dd>${escape(value)}</dd></div>`).join('')}</dl></details></section>`
+  separateViews()
+  const statContext = { league, rosters:data.rosters, directory:data.directory, maximum:availableWeek, currentWeek:week }
+  stats.setContext(statContext)
+  defense.setContext(statContext)
+  summaries.setContext({ ...data, maximum:availableWeek })
   $('report').querySelectorAll('img').forEach(image => {
     image.addEventListener('error', () => { image.hidden = true }, { once: true })
     if (image.complete && !image.naturalWidth) image.hidden = true
@@ -156,6 +165,11 @@ async function load({ refresh = false } = {}) {
   const id = active
   $('status').textContent = id ? 'Loading Sleeper scores...' : ''
   $('report').replaceChildren()
+  $('awards-view').replaceChildren()
+  $('standings-view').replaceChildren()
+  stats.clear()
+  defense.clear()
+  summaries.clear()
   document.querySelector('.hero-link').hidden = true
   $('refresh').disabled = true
   $('week').disabled = true
@@ -187,6 +201,7 @@ async function load({ refresh = false } = {}) {
     const state = await request('state/nfl', signal)
     if (signal.aborted) return
     const maximum = completedWeek(info.league, state)
+    availableWeek = maximum || 0
     if (maximum === null) throw new Error('Unable to determine completed NFL weeks. Please try Refresh.')
     if (maximum === 0) {
       week = null
@@ -288,6 +303,40 @@ $('install').addEventListener('click', async () => {
   $('install').hidden = true
 })
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(() => {})
+function separateViews() {
+  const report = $('report')
+  for (const section of [...report.querySelectorAll(':scope > section')]) {
+    const heading = section.querySelector('h2')?.textContent
+    if (heading === 'Player leaderboard') section.remove()
+    else if (heading === 'League awards') $('awards-view').append(section)
+    else if (heading === 'Team performance') $('standings-view').append(section)
+  }
+}
+function showView(name) {
+  const selected = ['report','stats','awards','standings'].includes(name) ? name : 'report'
+  $('report').hidden = selected !== 'report'
+  $('stats-view').hidden = selected !== 'stats'
+  $('awards-view').hidden = selected !== 'awards'
+  $('standings-view').hidden = selected !== 'standings'
+  document.querySelectorAll('[data-view]').forEach(link => { if (link.dataset.view === selected) link.setAttribute('aria-current','page'); else link.removeAttribute('aria-current') })
+  $('title').textContent = ({report:'Weekly Report',stats:'Player Stats',awards:'League Awards',standings:'Standings'})[selected]
+  if (selected === 'stats') showStatsMode(statsMode); else { stats.hide(); defense.hide() }
+}
+const stats = initStats({root:$('stats-root')})
+const defense = initDefense({root:$('defense-root')})
+const summaries = initSummary({awards:$('awards-view'),standings:$('standings-view')})
+let statsMode = 'players'
+function showStatsMode(mode) {
+  statsMode = mode
+  const players = mode === 'players'
+  $('stats-root').hidden = !players; $('defense-root').hidden = players
+  $('stats-players').setAttribute('aria-pressed',String(players)); $('stats-defense').setAttribute('aria-pressed',String(!players))
+  if (players) { defense.hide(); stats.show() } else { stats.hide(); defense.show() }
+}
+$('stats-players').addEventListener('click', () => showStatsMode('players'))
+$('stats-defense').addEventListener('click', () => showStatsMode('defense'))
+document.querySelectorAll('[data-view]').forEach(link => link.addEventListener('click', event => { event.preventDefault(); history.replaceState(null,'',link.hash); showView(link.dataset.view) }))
+showView(location.hash.slice(1))
 const account = initAccount({ onChange: saved => {
   if (saved) leagues = saved
   else { try { const guest = JSON.parse(sessionStorage.getItem(savedKey)); leagues = Array.isArray(guest) ? guest.filter(league => typeof league?.name === 'string' && /^\d{8,24}$/.test(league.league_id)) : [] } catch { leagues = [] } }
